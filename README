@@ -1,7 +1,7 @@
 == Welcome to Printr
 
-Printr is an interface to serial/usb/plain_file printers on *nix systems. You can use it with your udev rules etc. It is
-built as a rails engine, and should be used as a gem.
+Printr is an interface to serial/usb/plain_file printers on *nix systems. You can use it with your udev 
+rules etc. It is built as a rails engine, and should be used as a gem.
 
 You can pull the latest edition from this repo, or:
 
@@ -10,14 +10,19 @@ gem 'printr'
 
 Then run bundle install
 
-The default source for printer configurations is :yaml, and expects a printrs.yml file to be present in RAILS_ROOT/config/, you can also feed it
-off of an ActiveRecord, in initializers/printr.rb
+The default source for printer configurations is :yaml, and expects a printrs.yml file to be present in
+RAILS_ROOT/config/, you can also feed it off of an ActiveRecord, in initializers/printr.rb
 
-config.printr_source = {:active_record => { :class_name => YourActiveRecordClass, :name => :attribute_name, :path => :attribute_name } }
+config.printr_source = {:active_record => { 
+  :class_name => YourActiveRecordClass, 
+  :name => :attribute_name, 
+  :path => :attribute_name } 
+}
 
 Where:
 
-  :name must be an attribute of the active record object, and the value it resolves to must be a snake_case_name
+  :name must be an attribute of the active record object, and the value it resolves to must be 
+   a snake_case_name
   :path must be the full path to the printer, like /dev/som0 or /home/user/printer.txt
 
 ==Basic Usage:
