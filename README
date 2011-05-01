@@ -10,3 +10,31 @@ gem 'printr'
 
 Then run bundle install
 
+The default source for printer configurations is :yaml, and expects a printrs.yml file to be present in RAILS_ROOT/config/, you can also feed it
+off of an ActiveRecord, in initializers/printr.rb
+
+config.printr_source = {:active_record => { :class_name => YourActiveRecordClass, :name => :attribute_name, :path => :attribute_name } }
+
+Where:
+
+  :name must be an attribute of the active record object, and the value it resolves to must be a snake_case_name
+  :path must be the full path to the printer, like /dev/som0 or /home/user/printer.txt
+
+==Basic Usage:
+
+@printer = Printr.new
+@printer.the_name_of_some_printer "text"
+
+==Advanced Usage
+
+Create a printr folder in your views directory for your rails app. name the view #{some_name}.prnt.erb
+
+So for instance, say you want an item view:
+
+/views/printr/item.prnt.erb
+
+Then somewhere in your app, call:
+
+@printer = Printr.new
+@printer.the_name_of_some_printer "item",binding
+
