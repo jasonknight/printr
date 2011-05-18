@@ -15,7 +15,7 @@ module Printr
   @@sanitize_tokens = []
   mattr_accessor :codes
   @@codes = {
-      :hr => '=====================\n',
+      :hr => "=====================\n",
       :header => "\e@\e!\x38",
       :footer => "\n\n\n\n\x1DV\x00\x16\x20105"
     }
@@ -127,7 +127,6 @@ module Printr
             puts "[Printr] Printing to device..." + Printr.conf[key]
             File.open(Printr.conf[key],'w:ISO8859-15') do |f|
               f.write Printr.codes[:header]
-              f.write Printr.codes[:hr]
               f.write text
               f.write Printr.codes[:footer]
             end
