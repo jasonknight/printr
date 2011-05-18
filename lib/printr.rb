@@ -45,7 +45,7 @@ module Printr
   def self.open_printers
     @@conf.each do |key,value|
       key = key.to_sym
-      puts "[Printr]  Trying to open #{key} at path: #{path}..."
+      puts "[Printr]  Trying to open #{key} at path: #{value}..."
        begin
          @@printrs[key] =  SerialPort.new(value,9600)
          puts "[Printr] Success for SerialPort: #{ @printrs[key].inspect }"
