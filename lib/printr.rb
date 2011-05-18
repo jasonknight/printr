@@ -127,6 +127,7 @@ module Printr
             puts "[Printr] Printing to device..." + Printr.conf[key]
             File.open(Printr.conf[key],'w:ISO8859-15') do |f|
               f.write Printr.codes[:header]
+              f.write Printr.codes[:hr]
               f.write text
               f.write Printr.codes[:footer]
             end
