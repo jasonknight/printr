@@ -58,15 +58,8 @@ module Printr
        begin 
          @@printrs[key] = File.open(value,'w:ISO8859-15')
          puts "[Printr] opened as usb"
-       rescue Exception => e
-         puts "[Printr] Failed to open as USB" + e.inspect
-         puts @@printrs[key].inspect
-         @@conf.each do |k,v|
-           if @@printrs[k] and @@printrs[k].class == File then
-             @@printrs[key] = @@printrs[k] 
-             puts "[Printr]      Reused."
-           end
-         end
+       rescue Errno::EBUSY
+         @@printrs[key] = "ECHO"
        rescue Exception => e
          @@printrs[key] = File.open("#{RAILS_ROOT}/tmp/dummy-#{key}.txt","a")
          puts "[Printr]    Failed to open as either SerialPort or USB File. Created Dummy #{ @printrs[key].inspect } instead."
@@ -130,6 +123,12 @@ module Printr
             Printr.printrs[key].flush
         elsif Printr.printrs[key].class == SerialPort then
             Printr.printrs[key].write text
+          elsif Printr.printrs[key] == 'ECHO' then
+            text.split("\n").each do |line|
+              l = 'echo "'+line+'\r\n" > ' + @@conf[key]
+              puts "echoing #{l}"
+              system(l)
+            end
         else
             puts "Could not find #{key} #{Printr.printrs[key].class}"
         end
