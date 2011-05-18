@@ -16,8 +16,8 @@ module Printr
   mattr_accessor :codes
   @@codes = {
       :hr => '=====================\n',
-      :header => '\e@\e!\x38',
-      :footer => '\n\n\n\n\x1DV\x00\x16\x20105'
+      :header => "\e@\e!\x38",
+      :footer => "\n\n\n\n\x1DV\x00\x16\x20105"
     }
   mattr_accessor :printrs
   @@printrs = {}
@@ -102,8 +102,11 @@ module Printr
         elsif Printr.printrs[key].class == SerialPort then
             Printr.printrs[key].write text
           elsif Printr.printrs[key] == 'ECHO' then
+            puts "[Printr] writing to " + Printr.conf[key]
             File.open(Printr.conf[key],'w:ISO8859-15') do |f|
+              f.write Printr.codes[:header]
               f.write text
+              f.write Printr.codes[:footer]
             end
         else
             puts "Could not find #{key} #{Printr.printrs[key].class}"
