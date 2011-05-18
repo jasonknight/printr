@@ -43,29 +43,7 @@ module Printr
     return self.open_printers
   end
   def self.open_printers
-    @@conf.each do |key,value|
-      key = key.to_sym
-      puts "[Printr]  Trying to open #{key} at path: #{value}..."
-       begin
-         @@printrs[key] =  SerialPort.new(value,9600)
-         puts "[Printr] Success for SerialPort: #{ @printrs[key].inspect }"
-       rescue Exception => e
-         puts "[Printr]    Failed to open as SerialPort: #{ e.inspect }"
-         @@printrs[key] = nil
-       end
-       next if @@printrs[key]
-       # Try to open it as USB
-       begin 
-         @@printrs[key] = "ECHO"
-         puts "[Printr] opened as usb"
-       rescue Errno::EBUSY
-         @@printrs[key] = "ECHO"
-       rescue Exception => e
-         @@printrs[key] = File.open("#{RAILS_ROOT}/tmp/dummy-#{key}.txt","a")
-         puts "[Printr]    Failed to open as either SerialPort or USB File. Created Dummy #{ @printrs[key].inspect } instead."
-       end 
-     end
-    @@printrs
+   
   end 
   def self.close
     puts "[Printr]============"
@@ -124,16 +102,9 @@ module Printr
         elsif Printr.printrs[key].class == SerialPort then
             Printr.printrs[key].write text
           elsif Printr.printrs[key] == 'ECHO' then
-            l = 'echo "'+Printr.codes[:header]+'" > ' + Printr.conf[key]
-            system(l)
-            text.split("\n").each do |line|
-              l = 'echo "'+line.chop+'" > ' + Printr.conf[key]
-              next if line == "\n" or line == "\r\n" or line == ""
-              l = l.gsub("<br />","\n")
-              system(l)
+            File.open(Printr.conf[key],'w:ISO8859-15') do |f|
+              f.write text
             end
-            l = 'echo "'+Printr.codes[:footer]+'" > ' + Printr.conf[key]
-            system(l)
         else
             puts "Could not find #{key} #{Printr.printrs[key].class}"
         end
