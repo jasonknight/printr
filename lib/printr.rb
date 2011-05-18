@@ -58,8 +58,8 @@ module Printr
        begin 
          @@printrs[key] = File.open(value,'w:ISO8859-15')
          puts "[Printr] opened as usb"
-       rescue Errno::EBUSY
-         puts "[Printr] Failed to open as USB"
+       rescue Exception => e
+         puts "[Printr] Failed to open as USB" + e.inspect
          @@conf.each do |k,v|
            if @@printrs[k] and @@printrs[k].class == File then
              @@printrs[key] = @@printrs[k] 
