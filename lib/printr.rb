@@ -45,7 +45,7 @@ module Printr
   def self.open_printers
     @@conf.each do |key,value|
       key = key.to_sym
-      puts "[Printr]  Trying to open #{key}..."
+      puts "[Printr]  Trying to open #{key} at path: #{path}..."
        begin
          @@printrs[key] =  SerialPort.new(value,9600)
          puts "[Printr] Success for SerialPort: #{ @printrs[key].inspect }"
@@ -57,7 +57,9 @@ module Printr
        # Try to open it as USB
        begin 
          @@printrs[key] = File.open(value,'w:ISO8859-15')
+         puts "[Printr] opened as usb"
        rescue Errno::EBUSY
+         puts "[Printr] Failed to open as USB"
          @@conf.each do |k,v|
            if @@printrs[k] and @@printrs[k].class == File then
              @@printrs[key] = @@printrs[k] 
