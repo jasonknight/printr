@@ -125,7 +125,7 @@ module Printr
             Printr.printrs[key].write text
           elsif Printr.printrs[key] == 'ECHO' then
             text.split("\n").each do |line|
-              l = 'echo "'+line+'\r\n" > ' + @@conf[key]
+              l = 'echo "'+line+'\r\n" > ' + Printr.conf[key]
               puts "echoing #{l}"
               system(l)
             end
