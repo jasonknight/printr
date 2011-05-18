@@ -15,9 +15,9 @@ module Printr
   @@sanitize_tokens = []
   mattr_accessor :codes
   @@codes = {
-      :hr => "=====================\n",
-      :header => "\e@\e!\x38",
-      :footer => "\n\n\n\n\x1DV\x00\x16\x20105"
+      :hr => '=====================\n',
+      :header => '\e@\e!\x38',
+      :footer => '\n\n\n\n\x1DV\x00\x16\x20105'
     }
   mattr_accessor :printrs
   @@printrs = {}
