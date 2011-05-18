@@ -4,7 +4,7 @@ require "printr/version"
 
 Gem::Specification.new do |s|
   s.name        = "printr"
-  s.version     = Printr::VERSION
+  s.version     = '0.1.4'
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Michael Franzl","Jason Martin"]
   s.email       = ["jason@jason-knight-martin.com"]
