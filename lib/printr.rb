@@ -43,7 +43,29 @@ module Printr
     return self.open_printers
   end
   def self.open_printers
-   
+    @@conf.each do |key,value|
+      key = key.to_sym
+      puts "[Printr]  Trying to open #{key} at path: #{value}..."
+       begin
+         @@printrs[key] =  SerialPort.new(value,9600)
+         puts "[Printr] Success for SerialPort: #{ @printrs[key].inspect }"
+       rescue Exception => e
+         puts "[Printr]    Failed to open as SerialPort: #{ e.inspect }"
+         @@printrs[key] = nil
+       end
+       next if @@printrs[key]
+       # Try to open it as USB
+       begin 
+         @@printrs[key] = "ECHO"
+         puts "[Printr] opened as usb"
+       rescue Errno::EBUSY
+         @@printrs[key] = "ECHO"
+       rescue Exception => e
+         @@printrs[key] = File.open("#{RAILS_ROOT}/tmp/dummy-#{key}.txt","a")
+         puts "[Printr]    Failed to open as either SerialPort or USB File. Created Dummy #{ @printrs[key].inspect } instead."
+       end 
+     end
+    @@printrs
   end 
   def self.close
     puts "[Printr]============"
@@ -102,7 +124,7 @@ module Printr
         elsif Printr.printrs[key].class == SerialPort then
             Printr.printrs[key].write text
           elsif Printr.printrs[key] == 'ECHO' then
-            puts "[Printr] writing to " + Printr.conf[key]
+            puts "[Printr] Printing to device..." + Printr.conf[key]
             File.open(Printr.conf[key],'w:ISO8859-15') do |f|
               f.write Printr.codes[:header]
               f.write text
