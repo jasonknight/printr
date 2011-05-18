@@ -60,6 +60,7 @@ module Printr
          puts "[Printr] opened as usb"
        rescue Exception => e
          puts "[Printr] Failed to open as USB" + e.inspect
+         puts @@printrs[key].inspect
          @@conf.each do |k,v|
            if @@printrs[k] and @@printrs[k].class == File then
              @@printrs[key] = @@printrs[k] 
