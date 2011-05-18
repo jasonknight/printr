@@ -124,16 +124,12 @@ module Printr
         elsif Printr.printrs[key].class == SerialPort then
             Printr.printrs[key].write text
           elsif Printr.printrs[key] == 'ECHO' then
-            l = 'echo "'+line+'" > ' + @codes[:header]
-            system(l)
             text.split("\n").each do |line|
               l = 'echo "'+line+'" > ' + Printr.conf[key]
               next if line == "\n" or line == "\r\n"
               l = l.gsub("<br />","\n")
               system(l)
             end
-            l = 'echo "'+line+'" > ' + @codes[:footer]
-            system(l)
         else
             puts "Could not find #{key} #{Printr.printrs[key].class}"
         end
