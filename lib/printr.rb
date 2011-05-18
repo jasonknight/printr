@@ -56,7 +56,7 @@ module Printr
        next if @@printrs[key]
        # Try to open it as USB
        begin 
-         @@printrs[key] = File.open(value,'w:ISO8859-15')
+         @@printrs[key] = "ECHO"
          puts "[Printr] opened as usb"
        rescue Errno::EBUSY
          @@printrs[key] = "ECHO"
