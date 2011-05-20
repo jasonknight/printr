@@ -10,6 +10,10 @@ gem 'printr'
 
 Then run bundle install
 
+The rails g printr:install
+
+and rails f printr:views
+
 The default source for printer configurations is :yaml, and expects a printrs.yml file to be present in
 RAILS_ROOT/config/, you can also feed it off of an ActiveRecord, in initializers/printr.rb
 
