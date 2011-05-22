@@ -4,6 +4,8 @@ require 'erb'
 require 'serialport'
 module Printr
   require 'printr/engine' if defined?(Rails)
+  mattr_accessor :scope
+  @@scope = 'printr'
   mattr_accessor :printr_source #:yaml or :active_record
   @@printr_source = :yaml
   # :active_record => {:class_name => ClassName, :name => :model_field_name, :path => :model_path_name
@@ -163,9 +165,9 @@ module Printr
       return text
     end
     def template(name,bndng)
-      puts "[Printr] attempting to print with template #{RAILS_ROOT}/app/views/printr/#{name}.prnt.erb"
+      puts "[Printr] attempting to print with template #{RAILS_ROOT}/app/views/#{Printr.scope}/#{name}.prnt.erb"
       begin
-        erb = ERB.new(File.new("#{RAILS_ROOT}/app/views/printr/#{name}.prnt.erb",'r').read)
+        erb = ERB.new(File.new("#{RAILS_ROOT}/app/views/#{Printr.scope}/#{name}.prnt.erb",'r').read)
       rescue Exception => e
         puts "[Printr] Exception in view: " + e.inspect
         

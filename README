@@ -12,7 +12,12 @@ Then run bundle install
 
 The rails g printr:install
 
-and rails f printr:views
+and rails g printr:views
+
+If  you pass in a :scope, it will set that to the view directory. Normally it is: app/views/printr/view.prnt.erb,
+if you don't want it to be that, you can set the :scope rails g printr:views printer_views would install the
+views to app/views/printer_views/#{view}.prnt.erb
+
 
 The default source for printer configurations is :yaml, and expects a printrs.yml file to be present in
 RAILS_ROOT/config/, you can also feed it off of an ActiveRecord, in initializers/printr.rb
@@ -22,6 +27,10 @@ config.printr_source = {:active_record => {
   :name => :attribute_name, 
   :path => :attribute_name } 
 }
+
+If you set the scope, make sure to add:
+
+config.scope = 'the_scope_you_passed'
 
 Where:
 
