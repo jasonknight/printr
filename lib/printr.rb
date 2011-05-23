@@ -4,6 +4,10 @@ require 'erb'
 require 'serialport'
 module Printr
   require 'printr/engine' if defined?(Rails)
+  mattr_accessor :debug
+  @@debug = false
+  mattr_accessor :serial_baud_rate
+  @@serial_baud_rate = 9600
   mattr_accessor :scope
   @@scope = 'printr'
   mattr_accessor :printr_source #:yaml or :active_record
@@ -46,32 +50,13 @@ module Printr
   end
   def self.open_printers
     @@conf.each do |key,value|
-      key = key.to_sym
-      puts "[Printr]  Trying to open #{key} at path: #{value}..."
-       begin
-         @@printrs[key] =  SerialPort.new(value,9600)
-         puts "[Printr] Success for SerialPort: #{ @printrs[key].inspect }"
-       rescue Exception => e
-         puts "[Printr]    Failed to open as SerialPort: #{ e.inspect }"
-         @@printrs[key] = nil
-       end
-       next if @@printrs[key]
-       # Try to open it as USB
-       begin 
-         @@printrs[key] = "ECHO"
-         puts "[Printr] opened as usb"
-       rescue Errno::EBUSY
-         @@printrs[key] = "ECHO"
-       rescue Exception => e
-         @@printrs[key] = File.open("#{RAILS_ROOT}/tmp/dummy-#{key}.txt","a")
-         puts "[Printr]    Failed to open as either SerialPort or USB File. Created Dummy #{ @printrs[key].inspect } instead."
-       end 
+      @@printrs[key] = 'ECHO'
      end
     @@printrs
   end 
   def self.close
-    puts "[Printr]============"
-    puts "[Printr]CLOSING Printers..."
+    puts "[Printr]============" if Printr.debug
+    puts "[Printr]CLOSING Printers..." if Printr.debug
     @@printrs.map do |p| 
       begin
         p.close
@@ -105,43 +90,46 @@ module Printr
     end
     
     def logger
-      ActiveRecord::Base.logger
+      ActiveRecord::Base
+	include SalorScope.logger
     end
     def print_to(key,text)
       key = key.to_sym
       if text.nil? then
-        puts "[Printr] Umm...text is nil dudes..."
+        puts "[Printr] Umm...text is nil dudes..." if Printr.debug
         return
       end
       begin
         text = sanitize(text)
         if text.nil? then
-          puts "[Printr] Sanitize nillified the text..."
+          puts "[Printr] Sanitize nillified the text..." if Printr.debug
         end
-        puts "[Printr] Going ahead with printing of: " + text.to_s
-        t = Printr.printrs[key].class
-        if Printr.printrs[key].class == File then
-            Printr.printrs[key].write text
-            Printr.printrs[key].flush
-        elsif Printr.printrs[key].class == SerialPort then
-            Printr.printrs[key].write text
-          elsif Printr.printrs[key] == 'ECHO' then
-            puts "[Printr] Printing to device..." + Printr.conf[key]
-            File.open(Printr.conf[key],'w:ISO8859-15') do |f|
-              f.write Printr.codes[:header]
-              f.write text
-              f.write Printr.codes[:footer]
+        puts "[Printr] Going ahead with printing of: " + text.to_s[0..100] if Printr.debug
+        if Printr.printrs[key] == 'ECHO' then
+          puts "[Printr] Printing to device..." + Printr.conf[key] if Printr.debug
+          begin
+            SerialPort.new(Printr.printrs[key],@@serial_baud_rate) do |sp|
+              sp.write text
             end
+            return
+          rescue Exception => e
+            puts "[Printr] Printer is not a serial port." if Printr.debug
+          end
+          File.open(Printr.conf[key],'w:ISO8859-15') do |f|
+            f.write Printr.codes[:header]
+            f.write text
+            f.write Printr.codes[:footer]
+          end
         else
-            puts "Could not find #{key} #{Printr.printrs[key].class}"
+            puts "Could not find #{key} #{Printr.printrs[key]}" if Printr.debug
         end
       rescue Exception => e
-        puts "[Printr] Error in print_to: #{e.inspect}"
+        puts "[Printr] Error in print_to: #{e.inspect}" if Printr.debug
         Printr.close
       end
     end
     def method_missing(sym, *args, &block)
-      puts "[Printr] Called with: #{sym}"
+      puts "[Printr] Called with: #{sym}" if Printr.debug
       if Printr.printrs[sym] then
         if args[1].class == Binding then
           print_to(sym,template(args[0],args[1])) #i.e. you call @printr.kitchen('item',binding)
@@ -160,19 +148,19 @@ module Printr
           end while i < Printr.sanitize_tokens.length
         end
       rescue Exception => e
-        puts "[Printr] Error in sanittize"
+        puts "[Printr] Error in sanittize" if Printr.debug
       end
       return text
     end
     def template(name,bndng)
-      puts "[Printr] attempting to print with template #{RAILS_ROOT}/app/views/#{Printr.scope}/#{name}.prnt.erb"
+      puts "[Printr] attempting to print with template #{RAILS_ROOT}/app/views/#{Printr.scope}/#{name}.prnt.erb" if Printr.debug
       begin
         erb = ERB.new(File.new("#{RAILS_ROOT}/app/views/#{Printr.scope}/#{name}.prnt.erb",'r').read)
       rescue Exception => e
-        puts "[Printr] Exception in view: " + e.inspect
+        puts "[Printr] Exception in view: " + e.inspect if Printr.debug
         
       end
-      puts "[Printr] returning text"
+      puts "[Printr] returning text" if Printr.debug
       text = erb.result(bndng)
       if text.nil? then
         text = 'erb result made me nil'
