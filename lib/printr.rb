@@ -36,9 +36,9 @@ module Printr
   end
   def self.log(text)
     if self.logger == STDOUT
-      Printr.log text
+      puts text
     else
-      @@logger.send(:info,text)
+      @@logger.info text
     end
   end
   def self.setup
@@ -63,18 +63,8 @@ module Printr
      end
     @@printrs
   end 
-  def self.close
-    Printr.log "[Printr]============"
-    Printr.log "[Printr]CLOSING Printers..."
-    @@printrs.map do |p| 
-      begin
-        p.close if p.class == File
-      rescue
-        
-      end
-      p = nil
-    end
-  end
+
+
   # Instance Methods
   class Machine
     def initialize()
@@ -108,33 +98,33 @@ module Printr
         Printr.log "[Printr] Umm...text is nil dudes..."
         return
       end
-      begin
-        text = sanitize(text)
-        if text.nil? then
-          Printr.log "[Printr] Sanitize nillified the text..."
-        end
-        Printr.log "[Printr] Going ahead with printing of: " + text.to_s[0..100]
-        if Printr.printrs[key] == 'ECHO' then
-          Printr.log "[Printr] Printing to device..." + Printr.conf[key]
-          begin
-            SerialPort.new(Printr.printrs[key],@@serial_baud_rate) do |sp|
-              sp.write text
-            end
-            return
-          rescue Exception => e
-            Printr.log "[Printr] Printer is not a serial port."
+      text = sanitize(text)
+      if text.nil? then
+        Printr.log "[Printr] Sanitize nillified the text..."
+      end
+      Printr.log "[Printr] Going ahead with printing of: " + text.to_s[0..100]
+      if Printr.printrs[key] == 'ECHO' then
+        Printr.log "[Printr] Printing to device..." + Printr.conf[key]
+        begin
+          Printr.log "[Printr] Trying to open #{key} #{Printr.printrs[key]} as a SerialPort."
+          SerialPort.new(Printr.printrs[key],9600) do |sp|
+            sp.write text
           end
+          return
+        rescue Exception => e
+          Printr.log "[Printr] Failed to open #{key} #{Printr.printrs[key]} as a SerialPort: #{e.inspect}. Trying as a File instead."
+        end
+        begin
           File.open(Printr.conf[key],'w:ISO8859-15') do |f|
             f.write Printr.codes[:header]
             f.write text
             f.write Printr.codes[:footer]
           end
-        else
-            Printr.log "Could not find #{key} #{Printr.printrs[key]}"
+        rescue Exception => e
+          Printr.log "[Printr] Failed to open #{key} #{Printr.printrs[key]} as a File."
         end
-      rescue Exception => e
-        Printr.log "[Printr] Error in print_to: #{e.inspect}"
-        Printr.close
+      else
+          Printr.log "[Printr] Could not find #{key} #{Printr.printrs[key]}"
       end
     end
     def method_missing(sym, *args, &block)
