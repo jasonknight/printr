@@ -59,7 +59,7 @@ module Printr
   end
   def self.open_printers
     @@conf.each do |key,value|
-      @@printrs[key] = 'ECHO'
+      @@printrs[key] = value
      end
     @@printrs
   end 
@@ -103,30 +103,28 @@ module Printr
         Printr.log "[Printr] Sanitize nillified the text..."
       end
       Printr.log "[Printr] Going ahead with printing of: " + text.to_s[0..100]
-      if Printr.printrs[key] == 'ECHO' then
-        Printr.log "[Printr] Printing to device..." + Printr.conf[key]
-        begin
-          Printr.log "[Printr] Trying to open #{key} #{Printr.printrs[key]} as a SerialPort."
-          SerialPort.new(Printr.printrs[key],9600) do |sp|
-            sp.write text
-          end
-          return
-        rescue Exception => e
-          Printr.log "[Printr] Failed to open #{key} #{Printr.printrs[key]} as a SerialPort: #{e.inspect}. Trying as a File instead."
+
+      Printr.log "[Printr] Printing to device..." + Printr.conf[key]
+      begin
+        Printr.log "[Printr] Trying to open #{key} #{Printr.printrs[key]} as a SerialPort."
+        SerialPort.open(Printr.printrs[key],9600) do |sp|
+          sp.write text
         end
-        begin
-          File.open(Printr.conf[key],'w:ISO8859-15') do |f|
-            f.write Printr.codes[:header]
-            f.write text
-            f.write Printr.codes[:footer]
-          end
-        rescue Exception => e
-          Printr.log "[Printr] Failed to open #{key} #{Printr.printrs[key]} as a File."
+        return
+      rescue Exception => e
+        Printr.log "[Printr] Failed to open #{key} #{Printr.printrs[key]} as a SerialPort: #{e.inspect}. Trying as a File instead."
+      end
+      begin
+        File.open(Printr.conf[key],'w:ISO8859-15') do |f|
+          f.write Printr.codes[:header]
+          f.write text
+          f.write Printr.codes[:footer]
         end
-      else
-          Printr.log "[Printr] Could not find #{key} #{Printr.printrs[key]}"
+      rescue Exception => e
+        Printr.log "[Printr] Failed to open #{key} #{Printr.printrs[key]} as a File."
       end
     end
+
     def method_missing(sym, *args, &block)
       Printr.log "[Printr] Called with: #{sym}"
       if Printr.printrs[sym] then
