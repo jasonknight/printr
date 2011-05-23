@@ -24,7 +24,7 @@ module Printr
   mattr_accessor :codes
   @@codes = {
       :initialize => "\e@",
-      :papercut => "\n\n\n\n\x1DV\x00"
+      :papercut => "\x1DV\x00"
     }
   mattr_accessor :printrs
   @@printrs = {}
@@ -115,9 +115,7 @@ module Printr
       end
       begin
         File.open(Printr.conf[key],'w:ISO8859-15') do |f|
-          f.write Printr.codes[:initialize]
           f.write text
-          #f.write Printr.codes[:papercut]
         end
       rescue Exception => e
         Printr.log "[Printr] Failed to open #{key} #{Printr.printrs[key]} as a File."
