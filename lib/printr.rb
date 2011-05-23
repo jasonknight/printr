@@ -68,7 +68,7 @@ module Printr
     Printr.log "[Printr]CLOSING Printers..."
     @@printrs.map do |p| 
       begin
-        p.close
+        p.close if p.class == File
       rescue
         
       end
