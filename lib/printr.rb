@@ -34,10 +34,14 @@ module Printr
      return Printr::Machine.new
   end
   def self.log(text)
-    if self.logger == STDOUT
+    if @@logger == STDOUT
       puts text
     else
-      @@logger.info text
+      if @@logger.respond_to? :info
+        @@logger.info text
+      else
+        puts text
+      end
     end
   end
   def self.setup
@@ -87,10 +91,6 @@ module Printr
       
     end
     
-    def logger
-      ActiveRecord::Base
-	include SalorScope.logger
-    end
     def print_to(key,text)
       key = key.to_sym
       if text.nil? then
