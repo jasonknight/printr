@@ -4,12 +4,15 @@ require 'erb'
 require 'serialport'
 module Printr
   require 'printr/engine' if defined?(Rails)
+  mattr_accessor :encoding
+  @@encoding = 'ISO-8859-15'
   mattr_accessor :debug
   @@debug = false
   mattr_accessor :serial_baud_rate
   @@serial_baud_rate = 9600
   mattr_accessor :scope
-  @@scope = 'printr'
+  @@scope = 'printr' # essential what views directory to look in for the
+                     # templates
   mattr_accessor :printr_source        #:yaml or :active_record
   @@printr_source = :yaml              # :active_record => {:class_name => ClassName, :name => :model_field_name, :path => :model_path_name
                                        # E.G. printr_model = {:class_name => Printer, :name => :short_name, :path => :location }
@@ -126,6 +129,7 @@ module Printr
       begin
         File.open(Printr.conf[key],'w:ISO8859-15') do |f|
           Printr.log "[Printr] Writing text."
+          text.force_encoding 'ISO-8859-15'
           f.write text
         end
       rescue Exception => e
@@ -145,21 +149,35 @@ module Printr
         end
       end
     end
+
     def sanitize(text)
+      # Printr.sanitize_tokens is a pair array, that is index 0 is the needle and 1 is the replace, 2 is the needle
+      # 3 the replacement etc. [needle,replace,needle,replace,needle,replace]
       Printr.log "sanitize(#{text[0..55]})"
+      Printr.log "Forcing encoding to: " + Printr.encoding # Printr.encoding can be set in initializer with config.encoding = ISO-8859-15 etc
+      text.encode! Printr.encoding
+      char = ['ä', 'ü', 'ö', 'Ä', 'Ü', 'Ö', 'é', 'è', 'ú', 'ù', 'á', 'à', 'í', 'ì', 'ó', 'ò', 'â', 'ê', 'î', 'ô', 'û', 'ñ', 'ß']
+      replacement = ["\x84", "\x81", "\x94", "\x8E", "\x9A", "\x99", "\x82", "\x8A", "\xA3", "\x97", "\xA0", "\x85", "\xA1", "\x8D", "\xA2", "\x95", "\x83", "\x88", "\x8C", "\x93", "\x96", "\xA4", "\xE1"]
+      i = 0
+      Printr.log "Adding some tokens to the sanitize array"
       begin
-        i = 0
-        if Printr.sanitize_tokens.length > 1 then
-          begin
-            text.gsub!(Printr.sanitize_tokens[i],Printr.sanitize_tokens[i+1])
-            i += 2
-          end while i < Printr.sanitize_tokens.length
-        end
-      rescue Exception => e
-        Printr.log "[Printr] Error in sanittize" + $!.inspect
-      end
+        rx = Regexp.new(char[i].encode(Printr.encoding))
+        rep = replacement[i].force_encoding(Printr.encoding)
+        Printr.sanitize_tokens << rx
+        Printr.sanitize_tokens << rep
+        i += 1
+      end while i < char.length
+      i = 0
+      begin
+        rx = Printr.sanitize_tokens[i]
+        rep = Printr.sanitize_tokens[i+1]
+        Printr.log "Replacing: " + rx.to_s + " with " + rep.to_s
+        text.gsub!(rx, rep)
+        i += 2
+      end while i < Printr.sanitize_tokens.length
       return text
     end
+
     def template(name,bndng)
       Printr.log "[Printr] attempting to print with template #{RAILS_ROOT}/app/views/#{Printr.scope}/#{name}.prnt.erb"
       begin
