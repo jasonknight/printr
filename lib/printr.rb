@@ -114,7 +114,8 @@ module Printr
         Printr.log "[Printr] Failed to open #{key} #{Printr.printrs[key]} as a SerialPort: #{e.inspect}. Trying as a File instead."
       end
       begin
-        File.open(Printr.conf[key],'w:ISO8859-15') do |f|
+        File.open(Printr.conf[key],'w:ISO-8859-15') do |f|
+          text.force_encoding 'ISO-8859-15'
           f.write text
         end
       rescue Exception => e
@@ -132,20 +133,21 @@ module Printr
         end
       end
     end
+
     def sanitize(text)
+      text.encode! 'ISO-8859-15'
+      char = ['ä', 'ü', 'ö', 'Ä', 'Ü', 'Ö', 'é', 'è', 'ú', 'ù', 'á', 'à', 'í', 'ì', 'ó', 'ò', 'â', 'ê', 'î', 'ô', 'û', 'ñ', 'ß']
+      replacement = ["\x84", "\x81", "\x94", "\x8E", "\x9A", "\x99", "\x82", "\x8A", "\xA3", "\x97", "\xA0", "\x85", "\xA1", "\x8D", "\xA2", "\x95", "\x83", "\x88", "\x8C", "\x93", "\x96", "\xA4", "\xE1"]
+      i = 0
       begin
-        i = 0
-        if Printr.sanitize_tokens.length > 1 then
-          begin
-            text.gsub!(Printr.sanitize_tokens[i],Printr.sanitize_tokens[i+1])
-            i += 2
-          end while i < Printr.sanitize_tokens.length
-        end
-      rescue Exception => e
-        Printr.log "[Printr] Error in sanittize"
-      end
+        rx = Regexp.new(char[i].encode('ISO-8859-15'))
+        rep = replacement[i].force_encoding('ISO-8859-15')
+        text.gsub!(rx, rep)
+        i += 1
+      end while i < char.length
       return text
     end
+
     def template(name,bndng)
       Printr.log "[Printr] attempting to print with template #{RAILS_ROOT}/app/views/#{Printr.scope}/#{name}.prnt.erb"
       begin
