@@ -10,16 +10,16 @@ module Printr
   @@serial_baud_rate = 9600
   mattr_accessor :scope
   @@scope = 'printr'
-  mattr_accessor :printr_source #:yaml or :active_record
-  @@printr_source = :yaml
-  mattr_accessor :logger
+  mattr_accessor :printr_source        #:yaml or :active_record
+  @@printr_source = :yaml              # :active_record => {:class_name => ClassName, :name => :model_field_name, :path => :model_path_name
+                                       # E.G. printr_model = {:class_name => Printer, :name => :short_name, :path => :location }
+                                       # to create the list of printers it will call: 
+                                       # Printer.all.each { |p| @printrs[p.send(Printr.printr_model[:name].snake_case.to_sym)] = p.send(Printr.printr_model[:path]) }
+                                       # so if you have a printer named bar_printer, then you can print to it with @printr.bar_printer 'textl'
+  mattr_accessor :logger               # Expects STDOUT[Default], A logger, or a File Descriptor via File.open
   @@logger = STDOUT
-  # :active_record => {:class_name => ClassName, :name => :model_field_name, :path => :model_path_name
-                       # E.G. printr_model = {:class_name => Printer, :name => :short_name, :path => :location }
-                       # to create the list of printers it will call: 
-                       # Printer.all.each { |p| @printrs[p.send(Printr.printr_model[:name].snake_case.to_sym)] = p.send(Printr.printr_model[:path]) }
-                       # so if you have a printer named bar_printer, then you can print to it with @printr.bar_printer 'textl'
-  mattr_accessor :sanitize_tokens #pair list of needle regex, replace must be by 2s, i.e. [/[abc]/,"x",/[123]/,'0']
+  
+  mattr_accessor :sanitize_tokens      #pair list of needle regex, replace must be by 2s, i.e. [/[abc]/,"x",/[123]/,'0']
   @@sanitize_tokens = []
   mattr_accessor :codes
   @@codes = {
@@ -34,11 +34,15 @@ module Printr
      return Printr::Machine.new
   end
   def self.log(text)
+    return if not Printr.debug
+    text = "[Printr] #{text}" if not text.include?('[Printr]')
     if @@logger == STDOUT
-      puts text
+      @@logger.puts
     else
       if @@logger.respond_to? :info
         @@logger.info text
+      elsif @@logger.respond_to? :puts
+        @@logger.puts text
       else
         puts text
       end
@@ -48,12 +52,16 @@ module Printr
     yield self
   end
   def self.get_printers
+    Printr.log "Getting Printers"
     if @@printr_source == :yaml then
+      Printr.log "printr_source == :yaml"
       @@conf = YAML::load(File.open("#{RAILS_ROOT}/config/printrs.yml")) 
     elsif @@printr_source.class == Hash then
       if @@printr_source[:active_record] then
+          Printr.log "printr_source == :active_record"
           @@printr_source[:active_record][:class_name].all.each do |p|
             key = p.send(@@printr_source[:active_record][:name]).to_sym
+            Printr.log "conf[#{key}] = #{p.send(@@printr_source[:active_record][:path])}"
             @@conf[key] = p.send(@@printr_source[:active_record][:path])
           end
       end
@@ -64,6 +72,7 @@ module Printr
     @@conf.each do |key,value|
       @@printrs[key] = value
      end
+     Printr.log "open_printers returning: " + @@printrs.inspect
     @@printrs
   end 
 
@@ -92,6 +101,7 @@ module Printr
     end
     
     def print_to(key,text)
+      Printr.log "[Printr] print_to(#{key},#{text[0..55]})"
       key = key.to_sym
       if text.nil? then
         Printr.log "[Printr] Umm...text is nil dudes..."
@@ -101,7 +111,7 @@ module Printr
       if text.nil? then
         Printr.log "[Printr] Sanitize nillified the text..."
       end
-      Printr.log "[Printr] Going ahead with printing of: " + text.to_s[0..100]
+      Printr.log "[Printr] Going ahead with printing of: " + text.to_s[0..55]
 
       Printr.log "[Printr] Printing to device..." + Printr.conf[key]
       begin
@@ -115,6 +125,7 @@ module Printr
       end
       begin
         File.open(Printr.conf[key],'w:ISO8859-15') do |f|
+          Printr.log "[Printr] Writing text."
           f.write text
         end
       rescue Exception => e
@@ -126,13 +137,16 @@ module Printr
       Printr.log "[Printr] Called with: #{sym}"
       if Printr.printrs[sym] then
         if args[1].class == Binding then
+          Printr.log "Binding was passed"
           print_to(sym,template(args[0],args[1])) #i.e. you call @printr.kitchen('item',binding)
         else
+          Printr.log "No Binding was passed"
           print_to(sym,args[0])
         end
       end
     end
     def sanitize(text)
+      Printr.log "sanitize(#{text[0..55]})"
       begin
         i = 0
         if Printr.sanitize_tokens.length > 1 then
@@ -142,7 +156,7 @@ module Printr
           end while i < Printr.sanitize_tokens.length
         end
       rescue Exception => e
-        Printr.log "[Printr] Error in sanittize"
+        Printr.log "[Printr] Error in sanittize" + $!.inspect
       end
       return text
     end
@@ -151,8 +165,7 @@ module Printr
       begin
         erb = ERB.new(File.new("#{RAILS_ROOT}/app/views/#{Printr.scope}/#{name}.prnt.erb",'r').read)
       rescue Exception => e
-        Printr.log "[Printr] Exception in view: " + e.inspect
-        
+        Printr.log "[Printr] Exception in view: " + $!.inspect
       end
       Printr.log "[Printr] returning text"
       text = erb.result(bndng)
