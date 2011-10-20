@@ -181,7 +181,7 @@ module Printr
     def template(name,bndng)
       Printr.log "[Printr] attempting to print with template #{RAILS_ROOT}/app/views/#{Printr.scope}/#{name}.prnt.erb"
       begin
-        erb = ERB.new(File.new("#{RAILS_ROOT}/app/views/#{Printr.scope}/#{name}.prnt.erb",'r').read)
+        erb = ERB.new(File.new("#{RAILS_ROOT}/app/views/#{Printr.scope}/#{name}.prnt.erb",'r').read,0,'>')
       rescue Exception => e
         Printr.log "[Printr] Exception in view: " + $!.inspect
       end
