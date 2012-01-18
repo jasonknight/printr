@@ -178,6 +178,20 @@ module Printr
       return text
     end
 
+    def sane_template(name,bndng)
+      Printr.log "[Printr] attempting to print with template #{RAILS_ROOT}/app/views/#{Printr.scope}/#{name}.prnt.erb"
+      begin
+        erb = ERB.new(File.new("#{RAILS_ROOT}/app/views/#{Printr.scope}/#{name}.prnt.erb",'r').read,0,'>')
+      rescue Exception => e
+        Printr.log "[Printr] Exception in view: " + $!.inspect
+      end
+      Printr.log "[Printr] returning text"
+      text = erb.result(bndng)
+      if text.nil? then
+        text = 'erb result made me nil'
+      end
+      return sanitize(text)
+    end
     def template(name,bndng)
       Printr.log "[Printr] attempting to print with template #{RAILS_ROOT}/app/views/#{Printr.scope}/#{name}.prnt.erb"
       begin
@@ -192,5 +206,6 @@ module Printr
       end
       return text
     end
+
   end
 end
