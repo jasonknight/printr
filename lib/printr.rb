@@ -58,7 +58,7 @@ module Printr
     Printr.log "Getting Printers"
     if @@printr_source == :yaml then
       Printr.log "printr_source == :yaml"
-      @@conf = YAML::load(File.open("#{RAILS_ROOT}/config/printrs.yml")) 
+      @@conf = YAML::load(File.open("#{::Rails.root.to_s}/config/printrs.yml")) 
     elsif @@printr_source.class == Hash then
       if @@printr_source[:active_record] then
           Printr.log "printr_source == :active_record"
@@ -179,9 +179,9 @@ module Printr
     end
 
     def sane_template(name,bndng)
-      Printr.log "[Printr] attempting to print with template #{RAILS_ROOT}/app/views/#{Printr.scope}/#{name}.prnt.erb"
+      Printr.log "[Printr] attempting to print with template #{::Rails.root.to_s}/app/views/#{Printr.scope}/#{name}.prnt.erb"
       begin
-        erb = ERB.new(File.new("#{RAILS_ROOT}/app/views/#{Printr.scope}/#{name}.prnt.erb",'r').read,0,'>')
+        erb = ERB.new(File.new("#{::Rails.root.to_s}/app/views/#{Printr.scope}/#{name}.prnt.erb",'r').read,0,'>')
       rescue Exception => e
         Printr.log "[Printr] Exception in view: " + $!.inspect
       end
@@ -193,9 +193,9 @@ module Printr
       return sanitize(text)
     end
     def template(name,bndng)
-      Printr.log "[Printr] attempting to print with template #{RAILS_ROOT}/app/views/#{Printr.scope}/#{name}.prnt.erb"
+      Printr.log "[Printr] attempting to print with template #{::Rails.root.to_s}/app/views/#{Printr.scope}/#{name}.prnt.erb"
       begin
-        erb = ERB.new(File.new("#{RAILS_ROOT}/app/views/#{Printr.scope}/#{name}.prnt.erb",'r').read,0,'>')
+        erb = ERB.new(File.new("#{::Rails.root.to_s}/app/views/#{Printr.scope}/#{name}.prnt.erb",'r').read,0,'>')
       rescue Exception => e
         Printr.log "[Printr] Exception in view: " + $!.inspect
       end
