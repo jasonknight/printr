@@ -171,8 +171,11 @@ module Printr
       begin
         rx = Printr.sanitize_tokens[i]
         rep = Printr.sanitize_tokens[i+1]
-        Printr.log "Replacing: " + rx.to_s + " with " + rep.to_s
-        text.gsub!(rx, rep)
+        #Printr.log "Replacing: " + rx.to_s + " with " + rep.to_s
+        begin
+          text.gsub!(rx, rep)
+        rescue
+        end
         i += 2
       end while i < Printr.sanitize_tokens.length
       return text
