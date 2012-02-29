@@ -136,7 +136,19 @@ module Printr
         Printr.log "[Printr] Failed to open #{key} #{Printr.printrs[key]} as a File."
       end
     end
-
+#
+    def direct_write(file_path,text)
+      begin
+        File.open(file_path,'w:ISO8859-15') do |f|
+          Printr.log "[Printr] Writing text."
+          text.force_encoding 'ISO-8859-15'
+          f.write text
+        end
+      rescue Exception => e
+        Printr.log "[Printr] Failed to open #{file_path} as a File. #{e.inspect}"
+      end
+    end
+#
     def method_missing(sym, *args, &block)
       Printr.log "[Printr] Called with: #{sym}"
       if Printr.printrs[sym] then
