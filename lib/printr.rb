@@ -6,8 +6,6 @@ module Printr
   require 'printr/engine' if defined?(Rails)
   mattr_accessor :encoding
   @@encoding = 'ISO-8859-15'
-  mattr_accessor :santize
-  @@sanitize == false
   mattr_accessor :debug
   @@debug = false
   mattr_accessor :serial_baud_rate
@@ -129,7 +127,7 @@ module Printr
         Printr.log "[Printr] Failed to open #{key} #{Printr.printrs[key]} as a SerialPort: #{e.inspect}. Trying as a File instead."
       end
       begin
-        File.open(Printr.conf[key],'w:ISO-8859-15') do |f|
+        File.open(Printr.conf[key],'w:ISO8859-15') do |f|
           Printr.log "[Printr] Writing text."
           text.force_encoding 'ISO-8859-15'
           f.write text
@@ -141,7 +139,7 @@ module Printr
 #
     def direct_write(file_path,text)
       begin
-        File.open(file_path,'w:ISO-8859-15') do |f|
+        File.open(file_path,'w:ISO8859-15') do |f|
           Printr.log "[Printr] Writing text."
           text.force_encoding 'ISO-8859-15'
           f.write text
@@ -165,7 +163,6 @@ module Printr
     end
 
     def sanitize(text)
-      return text unless Printr.sanitize
       # Printr.sanitize_tokens is a pair array, that is index 0 is the needle and 1 is the replace, 2 is the needle
       # 3 the replacement etc. [needle,replace,needle,replace,needle,replace]
       Printr.log "sanitize(#{text[0..55]})"
@@ -173,7 +170,6 @@ module Printr
       text.encode! Printr.encoding
       char = ['ä', 'ü', 'ö', 'Ä', 'Ü', 'Ö', 'é', 'è', 'ú', 'ù', 'á', 'à', 'í', 'ì', 'ó', 'ò', 'â', 'ê', 'î', 'ô', 'û', 'ñ', 'ß']
       replacement = ["\x84", "\x81", "\x94", "\x8E", "\x9A", "\x99", "\x82", "\x8A", "\xA3", "\x97", "\xA0", "\x85", "\xA1", "\x8D", "\xA2", "\x95", "\x83", "\x88", "\x8C", "\x93", "\x96", "\xA4", "\xE1"]
-
       i = 0
       Printr.log "Adding some tokens to the sanitize array"
       begin
@@ -183,13 +179,15 @@ module Printr
         Printr.sanitize_tokens << rep
         i += 1
       end while i < char.length
-
       i = 0
       begin
         rx = Printr.sanitize_tokens[i]
         rep = Printr.sanitize_tokens[i+1]
         #Printr.log "Replacing: " + rx.to_s + " with " + rep.to_s
+        begin
           text.gsub!(rx, rep)
+        rescue
+        end
         i += 2
       end while i < Printr.sanitize_tokens.length
       return text
