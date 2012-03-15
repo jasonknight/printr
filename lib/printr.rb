@@ -141,7 +141,7 @@ module Printr
 #
     def direct_write(file_path,text)
       begin
-        File.open(file_path,'w:ISO8859-15') do |f|
+        File.open(file_path,'w:ISO-8859-15') do |f|
           Printr.log "[Printr] Writing text."
           text.force_encoding 'ISO-8859-15'
           f.write text
@@ -165,6 +165,7 @@ module Printr
     end
 
     def sanitize(text)
+      return text unless Printr.sanitize
       # Printr.sanitize_tokens is a pair array, that is index 0 is the needle and 1 is the replace, 2 is the needle
       # 3 the replacement etc. [needle,replace,needle,replace,needle,replace]
       Printr.log "sanitize(#{text[0..55]})"
